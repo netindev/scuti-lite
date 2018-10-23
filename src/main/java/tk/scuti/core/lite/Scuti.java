@@ -30,7 +30,7 @@ import jdk.internal.org.objectweb.asm.tree.ClassNode;
 /*
  * The MIT License
  *
- * Copyright 2015 netindev.
+ * Copyright 2018 netindev.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
