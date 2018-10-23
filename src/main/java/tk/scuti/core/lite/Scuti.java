@@ -133,14 +133,37 @@ public class Scuti {
       this.parseInput();
       System.out.println("Transforming classes");
       this.classes.values().forEach(classNode -> {
+         // bad signatures
          this.changeSignature(classNode);
+         // synthetic access (most decompilers doesn't show synthetic members)
          this.syntheticAccess(classNode);
+         // bridge access (almost the same than synthetic)
          this.bridgeAccess(classNode);
-         // soon more transformers??? o/
+         // clean members
+         this.cleanMembers(classNode);
       });
       System.out.println("Dumping output");
       this.dumpClasses();
       System.out.println("Obfuscation finished");
+   }
+   
+   private void cleanMembers(ClassNode classNode) {
+      classNode.methods.forEach(methodNode -> {
+         this.clean(methodNode.attrs);
+         this.clean(methodNode.parameters);
+         this.clean(methodNode.localVariables);
+      });
+      classNode.fields.forEach(fieldNode -> {
+         this.clean(fieldNode.attrs);
+      });
+      this.clean(classNode.innerClasses);
+      this.clean(classNode.attrs);
+   }
+   
+   private void clean(List<?> list) {
+      if (list != null) {
+         list.clear();
+      }
    }
 
    private void bridgeAccess(ClassNode classNode) {
