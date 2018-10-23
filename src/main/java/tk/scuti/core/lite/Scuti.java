@@ -225,7 +225,7 @@ public class Scuti {
                         jarFile.getInputStream(entry));
                   final ClassNode classNode = new ClassNode();
                   classReader.accept(classNode,
-                        ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
+                        ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE);
                   this.libraries.put(classNode.name, classNode);
                }
             } catch (final Exception e) {
