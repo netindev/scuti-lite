@@ -55,7 +55,7 @@ public class Scuti {
 
    private final File inputFile, outputFile;
    private final Map<String, ClassNode> classes, libraries;
-   
+
    private static final double PACKAGE_VERSION = 0.01D;
 
    public Scuti(File inputFile, File outputFile, List<File> libraries) {
@@ -80,7 +80,9 @@ public class Scuti {
          return;
       }
       try {
-         System.out.println("Scuti-lite Java obfuscator written by netindev, version " + PACKAGE_VERSION);
+         System.out.println(
+               "Scuti-lite Java obfuscator written by netindev, version "
+                     + PACKAGE_VERSION);
          parseArgs(args);
       } catch (final Throwable e) {
          e.printStackTrace();
@@ -145,7 +147,7 @@ public class Scuti {
       this.dumpClasses();
       System.out.println("Obfuscation finished");
    }
-   
+
    private void cleanMembers(ClassNode classNode) {
       classNode.methods.forEach(methodNode -> {
          this.clean(methodNode.attrs);
@@ -158,7 +160,7 @@ public class Scuti {
       this.clean(classNode.innerClasses);
       this.clean(classNode.attrs);
    }
-   
+
    private void clean(List<?> list) {
       if (list != null) {
          list.clear();
@@ -198,8 +200,7 @@ public class Scuti {
                final ClassReader classReader = new ClassReader(
                      jarFile.getInputStream(entry));
                final ClassNode classNode = new ClassNode();
-               classReader.accept(classNode,
-                     ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
+               classReader.accept(classNode, ClassReader.SKIP_DEBUG);
                this.classes.put(classNode.name, classNode);
             } else if (!entry.isDirectory()) {
                this.outputStream.putNextEntry(new ZipEntry(entry.getName()));
@@ -223,8 +224,8 @@ public class Scuti {
                   final ClassReader classReader = new ClassReader(
                         jarFile.getInputStream(entry));
                   final ClassNode classNode = new ClassNode();
-                  classReader.accept(classNode,
-                        ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE);
+                  classReader.accept(classNode, ClassReader.SKIP_FRAMES
+                        | ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE);
                   this.libraries.put(classNode.name, classNode);
                }
             } catch (final Exception e) {
@@ -237,7 +238,7 @@ public class Scuti {
 
    private void dumpClasses() throws IOException {
       this.classes.values().forEach(classNode -> {
-         ClassWriter classWriter = new LocalWriter(ClassWriter.COMPUTE_FRAMES);
+         ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_MAXS);
          try {
             classNode.accept(classWriter);
             final JarEntry jarEntry = new JarEntry(
@@ -245,24 +246,8 @@ public class Scuti {
             this.outputStream.putNextEntry(jarEntry);
             this.outputStream.write(classWriter.toByteArray());
          } catch (final Exception e) {
-            if (e.getMessage() != null) {
-               if (e instanceof ClassNotFoundException) {
-                  System.err.println("Error: \"" + e.getMessage()
-                        + "\" could not be found while writing \""
-                        + classNode.name + "\". Using COMPUTE_MAXS");
-                  classWriter = new LocalWriter(ClassWriter.COMPUTE_MAXS);
-                  classNode.accept(classWriter);
-               } else if (e.getMessage().contains("JSR/RET")) {
-                  System.err.println("Error while using COMPUTE_FRAMES in: \""
-                        + classNode.name
-                        + "\", because have JSR/RET. Using COMPUTE_MAXS");
-                  classWriter = new LocalWriter(ClassWriter.COMPUTE_MAXS);
-                  classNode.accept(classWriter);
-               }
-            } else {
-               System.err.println("Error while writing " + classNode.name);
-               e.printStackTrace();
-            }
+            System.err.println("Error while writing " + classNode.name);
+            e.printStackTrace();
          }
       });
       this.outputStream.close();
@@ -285,76 +270,6 @@ public class Scuti {
       }
       outputStream.flush();
       return outputStream.toByteArray();
-   }
-
-   private class LocalWriter extends ClassWriter {
-
-      public LocalWriter(int flags) {
-         super(flags);
-      }
-
-      @Override
-      protected String getCommonSuperClass(String firstType,
-            String secondType) {
-         if (firstType.equals("java/lang/Object")
-               || secondType.equals("java/lang/Object")) {
-            return "java/lang/Object";
-         }
-         final String firstToSecond = this.deriveCommonSuperName(firstType,
-               secondType);
-         final String secondToFirst = this.deriveCommonSuperName(secondType,
-               firstType);
-         if (!firstToSecond.equals("java/lang/Object")) {
-            return firstToSecond;
-         }
-         if (!secondToFirst.equals("java/lang/Object")) {
-            return secondToFirst;
-         }
-         final ClassNode first = Scuti.this.assureLoaded(firstType);
-         final ClassNode second = Scuti.this.assureLoaded(secondType);
-         return this.getCommonSuperClass(first.superName, second.superName);
-      }
-
-      private String deriveCommonSuperName(String firstType,
-            String secondType) {
-         ClassNode first = Scuti.this.assureLoaded(firstType);
-         final ClassNode second = Scuti.this.assureLoaded(secondType);
-         if (this.isAssignableFrom(firstType, secondType)) {
-            return firstType;
-         } else if (this.isAssignableFrom(secondType, firstType)) {
-            return secondType;
-         } else if (Modifier.isInterface(first.access)
-               || Modifier.isInterface(second.access)) {
-            return "java/lang/Object";
-         } else {
-            do {
-               firstType = first.superName;
-               first = Scuti.this.assureLoaded(firstType);
-            } while (!this.isAssignableFrom(firstType, secondType));
-            return firstType;
-         }
-      }
-
-      private boolean isAssignableFrom(String firstType, String secondType) {
-         return firstType.equals("java/lang/Object")
-               || firstType.equals(secondType);
-      }
-
-   }
-
-   public ClassNode assureLoaded(String string) {
-      ClassNode assureLoad = this.classes.get(string);
-      if (assureLoad == null) {
-         assureLoad = this.libraries.get(string);
-         if (assureLoad == null) {
-            try {
-               throw new ClassNotFoundException(string);
-            } catch (final ClassNotFoundException e) {
-               e.printStackTrace();
-            }
-         }
-      }
-      return assureLoad;
    }
 
 }
