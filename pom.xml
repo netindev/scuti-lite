@@ -15,6 +15,16 @@
 			<artifactId>commons-cli</artifactId>
 			<version>1.4</version>
 		</dependency>
+		<dependency>
+			<groupId>org.ow2.asm</groupId>
+			<artifactId>asm</artifactId>
+			<version>7.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.ow2.asm</groupId>
+			<artifactId>asm-tree</artifactId>
+			<version>7.0</version>
+		</dependency>
 	</dependencies>
 	<build>
 		<outputDirectory>target/classes</outputDirectory>
