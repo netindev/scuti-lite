@@ -54,7 +54,7 @@ public class Scuti {
    private JarOutputStream outputStream;
 
    private final File inputFile, outputFile;
-   private final Map<String, ClassNode> classes, libraries;
+   private final Map<String, ClassNode> classes;
 
    private static final double PACKAGE_VERSION = 0.01D;
 
@@ -62,15 +62,6 @@ public class Scuti {
       this.inputFile = inputFile;
       this.outputFile = outputFile;
       this.classes = new HashMap<>();
-      this.libraries = new HashMap<>();
-      if (libraries != null) {
-         try {
-            System.out.println("Loading libraries");
-            this.parseLibraries(libraries);
-         } catch (final IOException e) {
-            e.printStackTrace();
-         }
-      }
    }
 
    public static void main(String[] args) {
@@ -121,7 +112,7 @@ public class Scuti {
       } catch (final ParseException e) {
          System.err.println(e.getMessage());
          System.err.println(
-               "Correct use: java -jar scuti-lite.jar -in \"x.jar\" -out \"y.jar\" -lib* \"rt.jar\" -lib \"bar.jar\"");
+               "Correct use: java -jar scuti-lite.jar -in \"x.jar\" -out \"y.jar\"");
       } catch (final Throwable e) {
          e.printStackTrace();
       }
@@ -213,27 +204,6 @@ public class Scuti {
          }
       });
       jarFile.close();
-   }
-
-   private void parseLibraries(List<File> list) throws IOException {
-      for (final File file : list) {
-         final JarFile jarFile = new JarFile(file);
-         jarFile.stream().forEach(entry -> {
-            try {
-               if (entry.getName().endsWith(".class")) {
-                  final ClassReader classReader = new ClassReader(
-                        jarFile.getInputStream(entry));
-                  final ClassNode classNode = new ClassNode();
-                  classReader.accept(classNode, ClassReader.SKIP_FRAMES
-                        | ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE);
-                  this.libraries.put(classNode.name, classNode);
-               }
-            } catch (final Exception e) {
-               e.printStackTrace();
-            }
-         });
-         jarFile.close();
-      }
    }
 
    private void dumpClasses() throws IOException {
