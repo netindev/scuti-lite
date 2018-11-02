@@ -56,7 +56,7 @@ public class Scuti {
    private final File inputFile, outputFile;
    private final Map<String, ClassNode> classes;
 
-   private static final double PACKAGE_VERSION = 0.01D;
+   private static final double PACKAGE_VERSION = 0.02D;
 
    public Scuti(File inputFile, File outputFile, List<File> libraries) {
       this.inputFile = inputFile;
