@@ -58,7 +58,7 @@ public class Scuti {
 
    private static final double PACKAGE_VERSION = 0.02D;
 
-   public Scuti(File inputFile, File outputFile, List<File> libraries) {
+   public Scuti(File inputFile, File outputFile) {
       this.inputFile = inputFile;
       this.outputFile = outputFile;
       this.classes = new HashMap<>();
@@ -86,7 +86,6 @@ public class Scuti {
             Option.builder("in").hasArg().required().argName("jar").build());
       options.addOption(
             Option.builder("out").hasArg().required().argName("jar").build());
-      options.addOption(Option.builder("lib").hasArg().argName("jar").build());
       try {
          final CommandLine parse = new DefaultParser().parse(options, args);
          final File inputFile = new File(parse.getOptionValue("in"));
@@ -95,20 +94,7 @@ public class Scuti {
             System.err.println("Input file can't be read or doesn't exists");
             return;
          }
-         final List<File> libraries = new ArrayList<>();
-         if (parse.getOptionValues("lib") != null) {
-            final String[] parseLibraries = parse.getOptionValues("lib");
-            Arrays.asList(parseLibraries).forEach(library -> {
-               final File file = new File(library);
-               if (file.canRead() && file.exists()) {
-                  libraries.add(file);
-               } else {
-                  System.err.println("One of the library list can't be read");
-                  return;
-               }
-            });
-         }
-         new Scuti(inputFile, outputFile, libraries).run();
+         new Scuti(inputFile, outputFile).run();
       } catch (final ParseException e) {
          System.err.println(e.getMessage());
          System.err.println(
