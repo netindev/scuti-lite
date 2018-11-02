@@ -3,4 +3,4 @@ Java obfuscator in one class, with 3 transformers (more soon o/).
 
 Crashes JD-GUI, Luyten (Procyon), FernFlower, CFR & Jadx
 
-Usage: ```java -jar scuti-lite.jar -in "input.jar" -out "output.jar" -lib "rt.jar" -lib "library.jar"```
+Usage: ```java -jar scuti-lite.jar -in "input.jar" -out "output.jar"```
