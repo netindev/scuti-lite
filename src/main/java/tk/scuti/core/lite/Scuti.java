@@ -23,6 +23,7 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.MethodNode;
 
 /*
  * The MIT License
@@ -113,10 +114,14 @@ public class Scuti {
          this.changeSignature(classNode);
          // synthetic access (most decompilers doesn't show synthetic members)
          this.syntheticAccess(classNode);
-         // bridge access (almost the same than synthetic)
-         this.bridgeAccess(classNode);
          // clean members
          this.cleanMembers(classNode);
+         classNode.methods.forEach(methodNode -> {
+            // bridge access (almost the same than synthetic)
+            this.bridgeAccess(methodNode);
+            // varargs access (crashes CFR when last parameter isn't array)
+            this.varargsAccess(methodNode);
+         });
       });
       System.out.println("Dumping output");
       this.dumpClasses();
@@ -142,11 +147,18 @@ public class Scuti {
       }
    }
 
-   private void bridgeAccess(ClassNode classNode) {
-      classNode.methods.stream()
-            .filter(methodNode -> !methodNode.name.contains("<")
-                  && !Modifier.isAbstract(methodNode.access))
-            .forEach(methodNode -> methodNode.access |= Opcodes.ACC_BRIDGE);
+   private void varargsAccess(MethodNode methodNode) {
+      if ((methodNode.access & Opcodes.ACC_SYNTHETIC) == 0
+            && (methodNode.access & Opcodes.ACC_BRIDGE) == 0) {
+         methodNode.access |= Opcodes.ACC_VARARGS;
+      }
+   }
+
+   private void bridgeAccess(MethodNode methodNode) {
+      if (!methodNode.name.contains("<")
+            && !Modifier.isAbstract(methodNode.access)) {
+         methodNode.access |= Opcodes.ACC_BRIDGE;
+      }
    }
 
    private void syntheticAccess(ClassNode classNode) {
