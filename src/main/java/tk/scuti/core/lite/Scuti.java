@@ -110,6 +110,8 @@ public class Scuti {
       this.parseInput();
       System.out.println("Transforming classes");
       this.classes.values().forEach(classNode -> {
+         // bad sources
+         this.changeSource(classNode);
          // bad signatures
          this.changeSignature(classNode);
          // synthetic access (most decompilers doesn't show synthetic members)
@@ -168,10 +170,13 @@ public class Scuti {
       classNode.methods
             .forEach(methodNode -> methodNode.access |= Opcodes.ACC_SYNTHETIC);
    }
-
-   private void changeSignature(ClassNode classNode) {
+   
+   private void changeSource(ClassNode classNode) {
       classNode.sourceFile = this.getMassiveString();
       classNode.sourceDebug = this.getMassiveString();
+   }
+
+   private void changeSignature(ClassNode classNode) {
       classNode.signature = this.getMassiveString();
       classNode.fields.forEach(
             fieldNode -> fieldNode.signature = this.getMassiveString());
