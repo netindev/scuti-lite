@@ -24,6 +24,8 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /*
  * The MIT License
@@ -56,6 +58,8 @@ public class Scuti {
    private final Map<String, ClassNode> classes;
 
    private static final double PACKAGE_VERSION = 0.02D;
+   
+   private static final Logger logger = LoggerFactory.getLogger(Scuti.class.getName());
 
    public Scuti(File inputFile, File outputFile) {
       this.inputFile = inputFile;
@@ -64,15 +68,14 @@ public class Scuti {
    }
 
    public static void main(String[] args) {
+      System.out.println(
+            "Scuti-lite Java obfuscator written by netindev, version "
+                  + PACKAGE_VERSION);
       if (args.length == 0) {
-         System.err.println(
-               "Invalid arguments, please add to the arguments your input file.");
+         logger.error("Invalid arguments, please add to the arguments your input file.");
          return;
       }
       try {
-         System.out.println(
-               "Scuti-lite Java obfuscator written by netindev, version "
-                     + PACKAGE_VERSION);
          parseArgs(args);
       } catch (final Throwable e) {
          e.printStackTrace();
@@ -90,25 +93,23 @@ public class Scuti {
          final File inputFile = new File(parse.getOptionValue("in"));
          final File outputFile = new File(parse.getOptionValue("out"));
          if (!inputFile.exists() || !inputFile.canRead()) {
-            System.err.println("Input file can't be read or doesn't exists");
+            logger.error("Input file can't be read or doesn't exists");
             return;
          }
          new Scuti(inputFile, outputFile).run();
       } catch (final ParseException e) {
-         System.err.println(e.getMessage());
-         System.err.println(
-               "Correct use: java -jar scuti-lite.jar -in \"x.jar\" -out \"y.jar\"");
+         logger.error(e.getMessage());
       } catch (final Throwable e) {
-         e.printStackTrace();
+         logger.error(e.getMessage());
       }
    }
 
    private void run() throws Throwable {
       this.outputStream = new JarOutputStream(
             new FileOutputStream(this.outputFile));
-      System.out.println("Parsing input");
+      logger.info("Parsing input");
       this.parseInput();
-      System.out.println("Transforming classes");
+      logger.info("Transforming classes");
       this.classes.values().forEach(classNode -> {
          // bad sources
          this.changeSource(classNode);
@@ -125,9 +126,9 @@ public class Scuti {
             this.varargsAccess(methodNode);
          });
       });
-      System.out.println("Dumping output");
+      logger.info("Dumping output");
       this.dumpClasses();
-      System.out.println("Obfuscation finished");
+      logger.info("Obfuscation finished");
    }
 
    private void cleanMembers(ClassNode classNode) {
@@ -217,8 +218,7 @@ public class Scuti {
             this.outputStream.putNextEntry(jarEntry);
             this.outputStream.write(classWriter.toByteArray());
          } catch (final Exception e) {
-            System.err.println("Error while writing " + classNode.name);
-            e.printStackTrace();
+            logger.error("Error while writing " + classNode.name, e);
          }
       });
       this.outputStream.close();
