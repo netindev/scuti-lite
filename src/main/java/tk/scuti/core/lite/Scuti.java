@@ -6,8 +6,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Modifier;
+import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 /*
  * The MIT License
  *
- * Copyright 2018 netindev.
+ * Copyright 2019 netindev.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -57,9 +57,10 @@ public class Scuti {
    private final File inputFile, outputFile;
    private final Map<String, ClassNode> classes;
 
-   private static final double PACKAGE_VERSION = 0.02D;
-   
-   private static final Logger logger = LoggerFactory.getLogger(Scuti.class.getName());
+   private static final double PACKAGE_VERSION = 0.03D;
+
+   private static final Logger logger = LoggerFactory
+         .getLogger(Scuti.class.getName());
 
    public Scuti(File inputFile, File outputFile) {
       this.inputFile = inputFile;
@@ -68,11 +69,12 @@ public class Scuti {
    }
 
    public static void main(String[] args) {
-      System.out.println(
-            "Scuti-lite Java obfuscator written by netindev, version "
+      System.out
+            .println("Scuti-lite Java obfuscator written by netindev, version "
                   + PACKAGE_VERSION);
       if (args.length == 0) {
-         logger.error("Invalid arguments, please add to the arguments your input file.");
+         logger.error(
+               "Invalid arguments, please add to the arguments your input file and output file, e.g: \"java -jar scuti-lite.jar -in \"your input file.jar\" -out \"your output file.jar\".");
          return;
       }
       try {
@@ -107,18 +109,22 @@ public class Scuti {
    private void run() throws Throwable {
       this.outputStream = new JarOutputStream(
             new FileOutputStream(this.outputFile));
-      logger.info("Parsing input");
+      logger.info("Parsing input \"" + this.inputFile.getName() + "\"");
       this.parseInput();
       logger.info("Transforming classes");
       this.classes.values().forEach(classNode -> {
+         // remove unnecessary insn
+         this.removeNop(classNode);
+         if (!Modifier.isInterface(classNode.access)) {
+            this.transientAccess(classNode);
+         }
+         this.deprecatedAccess(classNode);
          // bad sources
          this.changeSource(classNode);
          // bad signatures
          this.changeSignature(classNode);
          // synthetic access (most decompilers doesn't show synthetic members)
          this.syntheticAccess(classNode);
-         // clean members
-         this.cleanMembers(classNode);
          classNode.methods.forEach(methodNode -> {
             // bridge access (almost the same than synthetic)
             this.bridgeAccess(methodNode);
@@ -126,28 +132,9 @@ public class Scuti {
             this.varargsAccess(methodNode);
          });
       });
-      logger.info("Dumping output");
+      logger.info("Dumping output \"" + this.outputFile.getName() + "\"");
       this.dumpClasses();
       logger.info("Obfuscation finished");
-   }
-
-   private void cleanMembers(ClassNode classNode) {
-      classNode.methods.forEach(methodNode -> {
-         this.clean(methodNode.attrs);
-         this.clean(methodNode.parameters);
-         this.clean(methodNode.localVariables);
-      });
-      classNode.fields.forEach(fieldNode -> {
-         this.clean(fieldNode.attrs);
-      });
-      this.clean(classNode.innerClasses);
-      this.clean(classNode.attrs);
-   }
-
-   private void clean(List<?> list) {
-      if (list != null) {
-         list.clear();
-      }
    }
 
    private void varargsAccess(MethodNode methodNode) {
@@ -171,7 +158,7 @@ public class Scuti {
       classNode.methods
             .forEach(methodNode -> methodNode.access |= Opcodes.ACC_SYNTHETIC);
    }
-   
+
    private void changeSource(ClassNode classNode) {
       classNode.sourceFile = this.getMassiveString();
       classNode.sourceDebug = this.getMassiveString();
@@ -183,6 +170,28 @@ public class Scuti {
             fieldNode -> fieldNode.signature = this.getMassiveString());
       classNode.methods.forEach(
             methodNode -> methodNode.signature = this.getMassiveString());
+   }
+
+   private void deprecatedAccess(ClassNode classNode) {
+      classNode.access |= Opcodes.ACC_DEPRECATED;
+      classNode.methods
+            .forEach(methodNode -> methodNode.access |= Opcodes.ACC_DEPRECATED);
+      classNode.fields
+            .forEach(fieldNode -> fieldNode.access |= Opcodes.ACC_DEPRECATED);
+   }
+
+   private void transientAccess(ClassNode classNode) {
+      classNode.fields
+            .forEach(fieldNode -> fieldNode.access |= Opcodes.ACC_TRANSIENT);
+   }
+   
+   private void removeNop(ClassNode classNode) {
+      classNode.methods.parallelStream().forEach(
+            methodNode -> Arrays.stream(methodNode.instructions.toArray())
+                  .filter(insnNode -> insnNode.getOpcode() == Opcodes.NOP)
+                  .forEach(insnNode -> {
+                     methodNode.instructions.remove(insnNode);
+                  }));
    }
 
    private void parseInput() throws IOException {

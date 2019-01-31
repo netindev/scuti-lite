@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>tk.scuti.core.lite</groupId>
 	<artifactId>scuti-lite</artifactId>
-	<version>0.0.2</version>
+	<version>0.0.3</version>
 	<properties>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
