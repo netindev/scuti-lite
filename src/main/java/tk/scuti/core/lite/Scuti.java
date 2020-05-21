@@ -27,6 +27,8 @@ import org.objectweb.asm.tree.MethodNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.swing.*;
+
 /*
  * The MIT License
  *
@@ -68,7 +70,13 @@ public class Scuti {
       this.classes = new HashMap<>();
    }
 
+   public static void start(File inputFile, File outputFile) throws Throwable {
+      new Scuti(inputFile, outputFile).run();
+   }
+
+   @Deprecated
    public static void main(String[] args) {
+
       System.out
             .println("Scuti-lite Java obfuscator written by netindev, version "
                   + PACKAGE_VERSION);
@@ -84,6 +92,7 @@ public class Scuti {
       }
    }
 
+   @Deprecated
    private static void parseArgs(String[] args) {
       final Options options = new Options();
       options.addOption(
@@ -99,10 +108,10 @@ public class Scuti {
             return;
          }
          new Scuti(inputFile, outputFile).run();
-      } catch (final ParseException e) {
-         logger.error(e.getMessage());
       } catch (final Throwable e) {
+         JOptionPane.showMessageDialog(null, "Something failed. \n" + e.getMessage());
          logger.error(e.getMessage());
+         Runtime.getRuntime().exit(-1);
       }
    }
 
@@ -134,7 +143,10 @@ public class Scuti {
       });
       logger.info("Dumping output \"" + this.outputFile.getName() + "\"");
       this.dumpClasses();
+
+      JOptionPane.showMessageDialog(null, "Obfuscation finished.");
       logger.info("Obfuscation finished");
+      Runtime.getRuntime().exit(0);
    }
 
    private void varargsAccess(MethodNode methodNode) {

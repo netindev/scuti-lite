@@ -35,6 +35,11 @@
 			<artifactId>slf4j-api</artifactId>
 			<version>1.7.5</version>
 		</dependency>
+		<dependency>
+			<groupId>com.formdev</groupId>
+			<artifactId>flatlaf</artifactId>
+			<version>0.35</version>
+		</dependency>
 	</dependencies>
 	<build>
 		<outputDirectory>target/classes</outputDirectory>
@@ -46,7 +51,7 @@
 					<archive>
 						<manifest>
 							<addClasspath>true</addClasspath>
-							<mainClass>tk.scuti.core.lite.Scuti</mainClass>
+							<mainClass>tk.scuti.core.lite.ScutiUI</mainClass>
 						</manifest>
 					</archive>
 				</configuration>
